@@ -24,14 +24,6 @@ class Board
     destination_coord = convert_alg_to_coord(player_input[-2..-1])
     return false if destination_coord == nil
 
-    if player_input[0] == "N" && !player_input.include?("x")
-      knight_candidates = knights_that_move(whose_turn, destination_coord, board)
-      if knight_candidates.length == 1
-        @board = move_piece(knight_candidates[0], destination_coord, @board)
-        return true
-      end
-    end
-
     if player_input.length == 2
       pawn_candidates = pawns_that_move(whose_turn, destination_coord)
       if pawn_candidates.length == 1
@@ -43,37 +35,53 @@ class Board
     if player_input.include?("x")
       destination_alg = player_input.split("x")[1]
       origin_alg = player_input.split("x")[0]
+      capture_mode = true
       if player_input.split("x").length != 2
         return false
       end
-      if player_input[0] == "N" || player_input[0] == "B" || player_input[0] == "R" || player_input[0] == "Q" || player_input[0] == "K"
-        origin_alg = origin_alg[1..-1]
-        function_output = pieces_that_can_capture(player_input[0], whose_turn, origin_alg, destination_alg)
-      else
-        function_output = pieces_that_can_capture("P", whose_turn, origin_alg, destination_alg)
+    else
+      destination_alg = player_input[-2..-1]
+      if destination_alg.length < 2
+        return false
       end
-      piece_that_captures = function_output[0]
-      destination_to_be_captured = function_output[1]
-
-      # pawn_that_captures = pieces_that_can_capture("P", whose_turn, origin_alg, destination_alg)[0]
-      # destination_to_be_captured = pieces_that_can_capture("P", whose_turn, origin_alg, destination_alg)[1]
-      # binding.pry
-      if piece_that_captures.length == 1 && destination_to_be_captured.length == 1
-        
-        # binding.pry
-        
-        @board = move_piece(piece_that_captures[0], destination_to_be_captured[0], @board)
-        display
-        # binding.pry 
-
-        return true
-      end
+      origin_alg = player_input[0..-3]
+      capture_mode = false
     end
-    return false
+
+    if player_input[0] == "N" || player_input[0] == "B" || player_input[0] == "R" || player_input[0] == "Q" || player_input[0] == "K"
+      origin_alg = origin_alg[1..-1]
+      function_output = pieces_that_can_capture(player_input[0], whose_turn, origin_alg, destination_alg, @board, capture_mode)
+    else
+      function_output = pieces_that_can_capture("P", whose_turn, origin_alg, destination_alg, @board, capture_mode)
+    end
+    piece_that_captures = function_output[0]
+    destination_to_be_captured = function_output[1]
+
+    # binding.pry 
+
+    which_king = whose_turn == 1 ? "WK" : "BK"
+
+    if piece_that_captures.length == 1 && destination_to_be_captured.length == 1       
+      @board = move_piece(piece_that_captures[0], destination_to_be_captured[0], @board)
+      return true
+    end
+  return false
   end
 
   def check?(which_king, board = @board)
     king_coords = coord_list_of_piece(which_king)[0]
+    king_alg = convert_coord_to_alg(king_coords)
+    whose_turn = which_king[0] == "W" ? 2 : 1
+    piece_list = ["P", "N", "B", "R", "Q", "K"]
+    check = false
+    piece_list.each do |piece|
+      pieces_and_destinations = pieces_that_can_capture(piece, whose_turn, "", king_alg, board, true)
+      if pieces_and_destinations[0].length >= 1
+        check = true
+        break
+      end
+    end
+    return check
   end
 
   def coord_list_of_piece(piece, board = @board)
@@ -96,16 +104,6 @@ class Board
     return new_board
   end
 
-  def valid_knight_move?(whose_turn, player_input, board = @board)
-    destination_coord = convert_alg_to_coord(player_input[-2..-1])
-    return false if destination_coord == nil
-    knight_candidates = knights_that_move(whose_turn, destination_coord, board)
-    if knight_candidates.length == 1
-      return true
-    end
-    return false
-  end
-
   def valid_pawn_move?(whose_turn, player_input, board = @board)
     destination_coord = convert_alg_to_coord(player_input)
     return false if destination_coord == nil
@@ -115,26 +113,8 @@ class Board
     end
     return false
   end
-  
-  def knights_that_move(whose_turn, coordinates, board)
-    knight = whose_turn == 1 ? "WN" : "BN"
-    knight_list = []
-    knight_moves = generate_piece_moves("N", coordinates)
 
-    # binding.pry
-
-    generate_piece_moves("N", coordinates).each do |pos|
-      if board[pos[0]][pos[1]] == knight
-        knight_list << pos
-      end
-    end
-    
-    # binding.pry
-
-    return knight_list
-  end
-
-  def generate_piece_moves(piece, pos)
+  def generate_piece_moves(piece, pos, whose_turn, capture_mode, board = @board)
     if piece == "N"
       list = [[pos[0]+2, pos[1]+1], [pos[0]+2, pos[1]-1], 
               [pos[0]+1, pos[1]+2], [pos[0]+1, pos[1]-2], 
@@ -148,6 +128,76 @@ class Board
       end
       return list2
     end
+
+    if piece == "B"
+      list = []
+      deltas = [[-1, -1], [-1, 1], [1, 1], [1, -1]]
+      deltas.each do |d|
+        list = list + gen_moves_through_extension(pos, d, whose_turn, capture_mode, board)
+      end
+      return list
+    end
+
+    if piece == "R"
+      list = []
+      deltas = [[-1,0],[1,0],[0,-1],[0,1]]
+      deltas.each do |d|
+        list = list + gen_moves_through_extension(pos, d, whose_turn, capture_mode, board)
+      end
+      return list
+    end
+
+    if piece == "Q"
+      list = []
+      deltas = [[-1,0],[1,0],[0,-1],[0,1],[-1, -1], [-1, 1], [1, 1], [1, -1]]
+      deltas.each do |d|
+        list = list + gen_moves_through_extension(pos, d, whose_turn, capture_mode, board)
+      end
+      return list
+    end
+
+    if piece == "K"
+      list = []
+      deltas = [[-1,0],[1,0],[0,-1],[0,1],[-1, -1], [-1, 1], [1, 1], [1, -1]]
+      deltas.each do |d|
+        list = list + gen_moves_extend_once(pos, d, whose_turn, capture_mode, board)
+      end
+      return list
+    end
+  end
+
+  def gen_moves_extend_once(pos, delta, whose_turn, capture_mode, board=@board)
+    possible_moves = []
+    current = pos.clone
+    opposite_side = whose_turn == 1 ? "B" : "W"
+    if (current[0]+delta[0]).between?(0,7) && (current[1]+delta[1]).between?(0,7) 
+      if board[current[0]+delta[0]][current[1]+delta[1]] != nil
+        if capture_mode == true && board[current[0]+delta[0]][current[1]+delta[1]][0] == opposite_side
+          possible_moves << [current[0]+delta[0], current[1]+delta[1]]
+        end
+      else
+        possible_moves << [current[0]+delta[0], current[1]+delta[1]]
+      end
+    end
+    return possible_moves
+  end
+
+  def gen_moves_through_extension(pos, delta, whose_turn, capture_mode, board=@board)
+    possible_moves = []
+    current = pos.clone
+    opposite_side = whose_turn == 1 ? "B" : "W"
+    while (current[0]+delta[0]).between?(0,7) && (current[1]+delta[1]).between?(0,7) 
+      if board[current[0]+delta[0]][current[1]+delta[1]] != nil
+        if capture_mode == true && board[current[0]+delta[0]][current[1]+delta[1]][0] == opposite_side
+          possible_moves << [current[0]+delta[0], current[1]+delta[1]]
+        end
+        break
+      end
+      possible_moves << [current[0]+delta[0], current[1]+delta[1]]
+      current[0] = current[0] + delta[0]
+      current[1] = current[1] + delta[1]
+    end
+    return possible_moves
   end
 
   def pawns_that_move(whose_turn, coordinates)
@@ -173,7 +223,7 @@ class Board
     return pawn_list
   end
 
-  def pieces_that_can_capture(piece, whose_turn, origin_alg, destination_alg, board= @board)
+  def pieces_that_can_capture(piece, whose_turn, origin_alg, destination_alg, board= @board, capture_mode= true)
     pieces_there = []
     destination_coords = []
     direction2 = whose_turn == 1 ? @direction : -@direction
@@ -181,6 +231,9 @@ class Board
     if origin_alg == nil || origin_alg.length == 0
       colored_piece = whose_turn == 1 ? "W"+piece : "B"+piece
       pieces_there = coord_list_of_piece(colored_piece, board)
+
+      # binding.pry
+
       puts pieces_there
     end
     if origin_alg.length == 1
@@ -201,10 +254,14 @@ class Board
     if destination_alg.length == 2
       coords2 = convert_alg_to_coord(destination_alg)
       return [[],[]] if coords2 == nil
-      if whose_turn == 1
-        destination_coords << coords2 if board[coords2[0]][coords2[1]] != nil && @board[coords2[0]][coords2[1]][0] == "B"
+      if capture_mode == true
+        if whose_turn == 1
+          destination_coords << coords2 if board[coords2[0]][coords2[1]] != nil && board[coords2[0]][coords2[1]][0] == "B"
+        else
+          destination_coords << coords2 if board[coords2[0]][coords2[1]] != nil && board[coords2[0]][coords2[1]][0] == "W"
+        end
       else
-        destination_coords << coords2 if board[coords2[0]][coords2[1]][0] == "W"
+        destination_coords << coords2 if board[coords2[0]][coords2[1]] == nil
       end
     elsif destination_alg.length == 1
       destination_coords = whose_turn == 1 ? pieces_in_that_column("B", column) :
@@ -214,6 +271,8 @@ class Board
     if destination_coords == []
       return [[],[]]
     end
+
+    # binding.pry 
 
     pieces_that_can_capture = []
     destinations_that_can_be_captured = []
@@ -225,21 +284,17 @@ class Board
             destinations_that_can_be_captured << d
           end
         else
-          
+
           # binding.pry 
 
-          if generate_piece_moves(piece, p).include?(d)
 
-
+          if generate_piece_moves(piece, p, whose_turn, capture_mode, board).include?(d)
             pieces_that_can_capture << p
             destinations_that_can_be_captured << d
           end
         end
       end
     end
-
-    # binding.pry
-
     return [pieces_that_can_capture, destinations_that_can_be_captured]
   end
 
@@ -275,7 +330,4 @@ class Board
       return [coord1, coord2]
     end
   end
-
-
-
 end
