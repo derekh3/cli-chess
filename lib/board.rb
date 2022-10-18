@@ -11,9 +11,14 @@ class Board
                           [nil,nil,nil,nil,nil,nil,nil,nil],
                           ['WP','WP','WP','WP','WP','WP','WP','WP'],
                           ['WR','WN','WB','WQ','WK','WB','WN','WR']], 
-                direction = 1)
+                direction = 1, en_passant_square_white = [], en_passant_square_black = [], turn = 0,
+              en_passant_square_candidate = [])
     @board = board
     @direction = direction
+    @en_passant_square_white = en_passant_square_white
+    @en_passant_square_black = en_passant_square_black
+    @en_passant_square_candidate = en_passant_square_candidate
+    @turn = turn 
   end
 
   def display
@@ -23,14 +28,6 @@ class Board
   def make_move(whose_turn, player_input)
     destination_coord = convert_alg_to_coord(player_input[-2..-1])
     return false if destination_coord == nil
-
-    # if player_input.length == 2
-    #   pawn_candidates = pawns_that_move(whose_turn, destination_coord)
-    #   if pawn_candidates.length == 1
-    #     @board = move_piece(pawn_candidates[0], destination_coord, @board)
-    #     return true
-    #   end
-    # end
 
     if player_input.include?("x")
       destination_alg = player_input.split("x")[1]
@@ -52,39 +49,57 @@ class Board
       origin_alg = origin_alg[1..-1]
       function_output = pieces_that_can_capture(player_input[0], whose_turn, origin_alg, destination_alg, @board, capture_mode)
     else
+      
       function_output = pieces_that_can_capture("P", whose_turn, origin_alg, destination_alg, @board, capture_mode)
     end
     piece_that_captures = function_output[0]
     destination_to_be_captured = function_output[1]
     which_king = whose_turn == 1 ? "WK" : "BK"
 
-    if piece_that_captures.length == 1 && destination_to_be_captured.length == 1     
-      binding.pry 
-        
-      candidate_board = move_piece(piece_that_captures[0], destination_to_be_captured[0], @board)
-      return false if check?(which_king, candidate_board)
-      
+   
+    if whose_turn == 1
       binding.pry
-
+    end
+    if piece_that_captures.length == 1 && destination_to_be_captured.length == 1     
+      candidate_board = move_piece(piece_that_captures[0], destination_to_be_captured[0], @board)
+      if destination_to_be_captured[0] == @en_passant_square_black
+        candidate_board = delete_piece([destination_to_be_captured[0][0]+1, destination_to_be_captured[0][1]], candidate_board)
+      elsif destination_to_be_captured[0] == @en_passant_square_white
+        candidate_board = delete_piece([destination_to_be_captured[0][0]-1, destination_to_be_captured[0][1]], candidate_board)
+      end
+      return false if check?(which_king, candidate_board)
       @board = Marshal.load( Marshal.dump(candidate_board) )
       pawn_to_promote = pawn_to_promote(whose_turn, @board)
       if pawn_to_promote.length >= 1
         promote_pawn(whose_turn, pawn_to_promote)
+      end
+      if whose_turn == 1
+        @en_passant_square_white = @en_passant_square_candidate
+        @en_passant_square_candidate = []
+      else
+        @en_passant_square_black = @en_passant_square_candidate
+        @en_passant_square_candidate = []
       end
       return true
     end
   return false
   end
 
+  def delete_piece(coords, board=@board)
+    new_board = Marshal.load( Marshal.dump(board) )
+    new_board[coords[0]][coords[1]] = nil
+    return new_board
+  end
+
   def pawn_to_promote(whose_turn, board=@board)
     if whose_turn == 1
       board[0].each_with_index do |x, col| 
-        # binding.pry
         return [0, col] if x == "WP" 
       end
     else
       board[7].each_with_index { |x, col| return [7, col] if x == "BP" }
     end
+    return []
   end
 
   def promote_pawn(whose_turn, coords)
@@ -105,9 +120,6 @@ class Board
     piece_list = ["P", "N", "B", "R", "Q", "K"]
     check = false
     piece_list.each do |piece|
-      if piece == "R"
-        # binding.pry
-      end
       pieces_and_destinations = pieces_that_can_capture(piece, whose_turn, "", king_alg, board, true)
       if pieces_and_destinations[0].length >= 1
         check = true
@@ -274,6 +286,7 @@ class Board
     elsif coordinates[0]+2*direction2 == initial_row && @board[coordinates[0]+2*direction2][coordinates[1]] == pawn && 
           @board[coordinates[0]][coordinates[1]] == nil && @board[coordinates[0]+direction2][coordinates[1]] == nil
       pawn_list << [coordinates[0]+2*direction2, coordinates[1]]
+      @en_passant_square_candidate = [coordinates[0]+direction2, coordinates[1]]
     end
     return pawn_list
   end
@@ -282,7 +295,8 @@ class Board
     pieces_there = []
     destination_coords = []
     direction2 = whose_turn == 1 ? @direction : -@direction
-   
+    opposite_ep_square = whose_turn == 1 ? @en_passant_square_black : @en_passant_square_white
+
     if origin_alg == nil || origin_alg.length == 0
       colored_piece = whose_turn == 1 ? "W"+piece : "B"+piece
       pieces_there = coord_list_of_piece(colored_piece, board)
@@ -311,6 +325,11 @@ class Board
         else
           destination_coords << coords2 if board[coords2[0]][coords2[1]] != nil && board[coords2[0]][coords2[1]][0] == "W"
         end
+        #account for en passant
+        if piece == "P"
+          # binding.pry
+          destination_coords << coords2 if coords2 == opposite_ep_square
+        end
       else
         destination_coords << coords2 if board[coords2[0]][coords2[1]] == nil
       end
@@ -326,16 +345,14 @@ class Board
     pieces_that_can_capture = []
     destinations_that_can_be_captured = []
     if capture_mode == false && piece == "P"
-      # binding.pry
       pawn_candidates = pawns_that_move(whose_turn, destination_coords[0])
       if pawn_candidates.length == 1
         pieces_that_can_capture = pawn_candidates
         destinations_that_can_be_captured = destination_coords
       end
     end
-    if piece == "R"
-      # binding.pry
-    end
+
+
     pieces_there.each do |p|
       destination_coords.each do |d|
         if piece == "P"
@@ -344,12 +361,6 @@ class Board
               pieces_that_can_capture << p
               destinations_that_can_be_captured << d
             end
-          else
-            # pawn_candidates = pawns_that_move(whose_turn, d)
-            # if pawn_candidates.length == 1
-            #   pieces_that_can_capture = pawn_candidates
-            #   destinations_that_can_be_captured << d
-            # end
           end
         else
           if generate_piece_moves(piece, p, whose_turn, capture_mode, board).include?(d)

@@ -190,34 +190,92 @@ describe Board do
     #   end
     # end
 
-    context "When black pawn is about to be promoted" do
-      subject(:board4) { described_class.new( 
-        [['BR',nil,'BB','BQ',nil,'BB','BN','BR'],
-        ['BP',nil,'BP',nil,'BP','BP',nil,'BP'],
-        [nil, nil, 'BN', nil,nil,nil,nil,nil],
-        [nil, nil, nil, nil,nil,nil,'BP',nil],
-        ['BK', nil, nil, nil,nil,nil,'WP',nil],
-        [nil, nil,nil, nil, nil,nil,nil,nil],
-        ['WP',nil,'BP',nil,'WP','WP',nil,'WP'],
-        ["WK", nil,nil,nil,nil,'WB','WN','WR']] ) }
+    # context "When black pawn is about to be promoted" do
+    #   subject(:board4) { described_class.new( 
+    #     [['BR',nil,'BB','BQ',nil,'BB','BN','BR'],
+    #     ['BP',nil,'BP',nil,'BP','BP',nil,'BP'],
+    #     [nil, nil, 'BN', nil,nil,nil,nil,nil],
+    #     [nil, nil, nil, nil,nil,nil,'BP',nil],
+    #     ['BK', nil, nil, nil,nil,nil,'WP',nil],
+    #     [nil, nil,nil, nil, nil,nil,nil,nil],
+    #     ['WP',nil,'BP',nil,'WP','WP',nil,'WP'],
+    #     ["WK", nil,nil,nil,nil,'WB','WN','WR']] ) }
       
-      before do
-        allow(board4).to receive(:gets).and_return("N")
-      end
-      it "allows promotion to N to occur" do
-        expected_board = 
-        [['BR',nil,'BB','BQ',nil,'BB','BN','BR'],
+    #   before do
+    #     allow(board4).to receive(:gets).and_return("N")
+    #   end
+    #   it "allows promotion to N to occur" do
+    #     expected_board = 
+    #     [['BR',nil,'BB','BQ',nil,'BB','BN','BR'],
+    #     ['BP',nil,'BP',nil,'BP','BP',nil,'BP'],
+    #     [nil, nil, 'BN', nil,nil,nil,nil,nil],
+    #     [nil, nil, nil, nil,nil,nil,'BP',nil],
+    #     ['BK', nil, nil, nil,nil,nil,'WP',nil],
+    #     [nil, nil,nil, nil, nil,nil,nil,nil],
+    #     ['WP',nil,nil,nil,'WP','WP',nil,'WP'],
+    #     ["WK", nil,'BN',nil,nil,'WB','WN','WR']] 
+    #     board4.make_move(2, "c1")
+    #     expect(board4.board).to eq(expected_board)
+    #   end
+    # end
+
+    # context "When black pawn moves such as to allow en passant by white" do
+    #   subject(:board4) { described_class.new( 
+    #     [['BR',nil,'BB','BQ',nil,'BB','BN','BR'],
+    #     ['BP',nil,'BP',nil,'BP','BP',nil,'BP'],
+    #     [nil, nil, 'BN', nil,nil,nil,nil,nil],
+    #     [nil, 'WP', nil, nil,nil,nil,'BP',nil],
+    #     ['BK', nil, nil, nil,nil,nil,'WP',nil],
+    #     [nil, nil,nil, nil, nil,nil,nil,nil],
+    #     ['WP',nil,nil,nil,'WP','WP',nil,'WP'],
+    #     ["WK", nil,nil,nil,nil,'WB','WN','WR']] ) }
+      
+    #   before do
+    #     board4.make_move(2, "a5")
+    #   end
+    #   it "allows white to capture black's pawn en passant" do
+    #     expected_board = 
+    #     [['BR',nil,'BB','BQ',nil,'BB','BN','BR'],
+    #     [nil,nil,'BP',nil,'BP','BP',nil,'BP'],
+    #     ['WP', nil, 'BN', nil,nil,nil,nil,nil],
+    #     [nil, nil, nil, nil,nil,nil,'BP',nil],
+    #     ['BK', nil, nil, nil,nil,nil,'WP',nil],
+    #     [nil, nil,nil, nil, nil,nil,nil,nil],
+    #     ['WP',nil,nil,nil,'WP','WP',nil,'WP'],
+    #     ["WK", nil,nil,nil,nil,'WB','WN','WR']] 
+    #     board4.make_move(1, "b5xa6")
+    #     expect(board4.board).to eq(expected_board)
+    #   end
+    # end
+    
+    context "When white pawn moves such as to allow en passant by black" do
+      subject(:board4) { described_class.new( 
+        [['BR',nil,'BB','BQ','BK','BB','BN','BR'],
         ['BP',nil,'BP',nil,'BP','BP',nil,'BP'],
         [nil, nil, 'BN', nil,nil,nil,nil,nil],
         [nil, nil, nil, nil,nil,nil,'BP',nil],
-        ['BK', nil, nil, nil,nil,nil,'WP',nil],
+        [nil, 'BP', nil, nil,nil,nil,'WP',nil],
         [nil, nil,nil, nil, nil,nil,nil,nil],
         ['WP',nil,nil,nil,'WP','WP',nil,'WP'],
-        ["WK", nil,'BN',nil,nil,'WB','WN','WR']] 
-        board4.make_move(2, "c1")
+        [nil, nil,nil,nil,'WK','WB','WN','WR']] ) }
+      before do
+        board4.make_move(1, "a4")
+      end
+      it "allows black to capture white's pawn en passant" do
+        expected_board = 
+        [['BR',nil,'BB','BQ','BK','BB','BN','BR'],
+        ['BP',nil,'BP',nil,'BP','BP',nil,'BP'],
+        [nil, nil, 'BN', nil,nil,nil,nil,nil],
+        [nil, nil, nil, nil,nil,nil,'BP',nil],
+        [nil, nil, nil, nil,nil,nil,'WP',nil],
+        ['BP', nil,nil, nil, nil,nil,nil,nil],
+        [nil,nil,nil,nil,'WP','WP',nil,'WP'],
+        [nil, nil,nil,nil,'WK','WB','WN','WR']]
+        board4.make_move(2, 'b4xa3')
         expect(board4.board).to eq(expected_board)
       end
     end
+
 
   end 
 
