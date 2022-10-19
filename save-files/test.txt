@@ -1,0 +1,210 @@
+---
+:board:
+- - BR
+  - BN
+  - BB
+  - BQ
+  - BK
+  - BB
+  - BN
+  - BR
+- - BP
+  - BP
+  - BP
+  - BP
+  -
+  - BP
+  - BP
+  - BP
+- -
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+- -
+  -
+  -
+  -
+  - BP
+  -
+  -
+  -
+- -
+  -
+  -
+  -
+  - WP
+  -
+  -
+  -
+- -
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+- - WP
+  - WP
+  - WP
+  - WP
+  -
+  - WP
+  - WP
+  - WP
+- - WR
+  - WN
+  - WB
+  - WQ
+  - WK
+  - WB
+  - WN
+  - WR
+:direction: 1
+:en_passant_square_white:
+- 5
+- 4
+:en_passant_square_black:
+- 2
+- 4
+:en_passant_square_candidate: []
+:white_O_O: true
+:white_O_O_O: true
+:black_O_O: true
+:black_O_O_O: true
+:whose_turn: 1
+:history:
+- - - - BR
+      - BN
+      - BB
+      - BQ
+      - BK
+      - BB
+      - BN
+      - BR
+    - - BP
+      - BP
+      - BP
+      - BP
+      - BP
+      - BP
+      - BP
+      - BP
+    - -
+      -
+      -
+      -
+      -
+      -
+      -
+      -
+    - -
+      -
+      -
+      -
+      -
+      -
+      -
+      -
+    - -
+      -
+      -
+      -
+      -
+      -
+      -
+      -
+    - -
+      -
+      -
+      -
+      -
+      -
+      -
+      -
+    - - WP
+      - WP
+      - WP
+      - WP
+      - WP
+      - WP
+      - WP
+      - WP
+    - - WR
+      - WN
+      - WB
+      - WQ
+      - WK
+      - WB
+      - WN
+      - WR
+  - 1
+- - - - BR
+      - BN
+      - BB
+      - BQ
+      - BK
+      - BB
+      - BN
+      - BR
+    - - BP
+      - BP
+      - BP
+      - BP
+      - BP
+      - BP
+      - BP
+      - BP
+    - -
+      -
+      -
+      -
+      -
+      -
+      -
+      -
+    - -
+      -
+      -
+      -
+      -
+      -
+      -
+      -
+    - -
+      -
+      -
+      -
+      - WP
+      -
+      -
+      -
+    - -
+      -
+      -
+      -
+      -
+      -
+      -
+      -
+    - - WP
+      - WP
+      - WP
+      - WP
+      -
+      - WP
+      - WP
+      - WP
+    - - WR
+      - WN
+      - WB
+      - WQ
+      - WK
+      - WB
+      - WN
+      - WR
+  - 2

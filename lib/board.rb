@@ -1,7 +1,10 @@
 require "pry-byebug"
-
+require "./lib/piece_icons.rb"
 class Board
+  include PieceIcons
+
   attr_reader :board
+  attr_reader :whose_turn
 
   def initialize(board = [['BR','BN','BB','BQ','BK','BB','BN','BR'],
                           ['BP','BP','BP','BP','BP','BP','BP','BP'],
@@ -11,9 +14,9 @@ class Board
                           [nil,nil,nil,nil,nil,nil,nil,nil],
                           ['WP','WP','WP','WP','WP','WP','WP','WP'],
                           ['WR','WN','WB','WQ','WK','WB','WN','WR']], 
-                direction = 1, en_passant_square_white = [], en_passant_square_black = [], turn = 0,
+                direction = 1, en_passant_square_white = [], en_passant_square_black = [],
               en_passant_square_candidate = [], white_O_O = true, white_O_O_O = true,  black_O_O = true, black_O_O_O = true,
-            history = [])
+            whose_turn = 1, history = [])
     @board = board
     @direction = direction
     @en_passant_square_white = en_passant_square_white
@@ -23,12 +26,92 @@ class Board
     @white_O_O_O = white_O_O_O
     @black_O_O = black_O_O
     @black_O_O_O = black_O_O_O
-    @turn = turn
+    @whose_turn = whose_turn
     @history = history
   end
 
+
+  def self.from_yaml(string)
+    data = YAML.load string
+    self.new(data[:board], data[:direction], data[:en_passant_square_white], data[:en_passant_square_black], data[:en_passant_square_candidate], 
+      data[:white_O_O], data[:white_O_O_O], data[:black_O_O], data[:black_O_O_O], data[:whose_turn], data[:history])
+  end
+
+  def to_yaml
+    YAML.dump({
+      :board => @board,
+      :direction => @direction,
+      :en_passant_square_white  => @en_passant_square_white ,
+      :en_passant_square_black => @en_passant_square_black,
+      :en_passant_square_candidate => @en_passant_square_candidate,
+      :white_O_O => @white_O_O,
+      :white_O_O_O => @white_O_O_O,
+      :black_O_O => @black_O_O,
+      :black_O_O_O => @black_O_O_O,
+      :whose_turn => @whose_turn,
+      :history => @history
+    })
+  end
+
+  
   def display
-    @board.each {|row| p row}
+    puts letter_coords + draw_grid + letter_coords
+  end
+  
+  def letter_coords
+    %(    A  B  C  D  E  F  G  H\n).green
+  end
+
+  def map_bg_colours
+    @board.each_with_index.map do |line, idx|
+      black_cell = idx.even? ? true : false
+      line.map do |cell|
+        res = black_cell ? to_string(cell).bg_cyan : to_string(cell).bg_grayer
+        black_cell = black_cell ? false : true
+        res
+      end
+    end
+  end
+
+  def draw_grid
+    counter = 8
+    final = map_bg_colours.map do |line|
+      res = " #{counter} ".green + line.join + " #{counter} ".green + "\n"
+      counter -= 1
+      res
+    end
+    final.join
+  end
+
+  def to_string(piece)
+    case piece
+    when "WP"
+      white_pawn
+    when "BP"
+      black_pawn
+    when "WR"
+      white_rook
+    when "BR"
+      black_rook
+    when "WB"
+      white_bishop
+    when "BB"
+      black_bishop
+    when "WN"
+      white_knight
+    when "BN"
+      black_knight
+    when "WQ"
+      white_queen
+    when "BQ"
+      black_queen
+    when "WK"
+      white_king
+    when "BK"
+      black_king
+    else
+      "   "
+    end
   end
 
   def make_move(whose_turn, player_input)
@@ -76,6 +159,7 @@ class Board
           promote_pawn(whose_turn, pawn_to_promote)
         end
         update_en_passant(whose_turn)
+        @whose_turn = @whose_turn == 1 ? 2 : 1
         return true
       end
     else
@@ -83,6 +167,7 @@ class Board
       if made_castle_move
         update_castling_vars_castle(whose_turn, player_input)
         update_en_passant(whose_turn)
+        @whose_turn = @whose_turn == 1 ? 2 : 1
         return true
       end
     end
@@ -385,8 +470,8 @@ class Board
     if origin_alg.length == 1
       column = convert_alg_col_to_coord(origin_alg)
       return [[],[]] if column == nil
-      pieces_there = whose_turn == 1 ? pieces_in_that_column("W"+piece, column) :
-                                      pieces_in_that_column("B"+piece, column)
+      pieces_there = whose_turn == 1 ? pieces_in_that_row_or_column("W"+piece, origin_alg, board) :
+                                      pieces_in_that_row_or_column("B"+piece, origin_alg, board)
     elsif origin_alg.length == 2
       coords = convert_alg_to_coord(origin_alg)
       return [[],[]] if coords == nil
@@ -414,8 +499,8 @@ class Board
         destination_coords << coords2 if board[coords2[0]][coords2[1]] == nil
       end
     elsif destination_alg.length == 1
-      destination_coords = whose_turn == 1 ? pieces_in_that_column("B", column) :
-                                             pieces_in_that_column("W", column)
+      destination_coords = whose_turn == 1 ? pieces_in_that_row_or_column("B"+piece, destination_alg, board) :
+                                             pieces_in_that_row_or_column("W"+piece, destination_alg, board)
     end
     
     if destination_coords == []
@@ -453,8 +538,24 @@ class Board
     return [pieces_that_can_capture.uniq, destinations_that_can_be_captured.uniq]
   end
 
-  def pieces_in_that_column(piece, col)
-    
+  def pieces_in_that_row_or_column(piece, row_or_col, board)
+    pieces_there = []
+    if row_or_col == "1" || row_or_col == "2" || row_or_col == "3" || row_or_col == "4" || row_or_col == "5" || 
+      row_or_col == "6" || row_or_col == "7" || row_or_col == "8"
+      row = row_or_col.to_i
+      board[row].each_with_index do |square, col|
+        pieces_there << [row, col] if square == piece
+      end
+    elsif row_or_col == "a" || row_or_col == "b" || row_or_col == "c" || row_or_col == "d" || row_or_col == "e" || 
+      row_or_col == "f" || row_or_col == "g" || row_or_col == "h"
+      col = convert_alg_col_to_coord(row_or_col)
+      board.each_with_index do |line, r|
+        line.each_with_index do |square, c|
+          pieces_there << [r, col] if square == piece && c == col
+        end
+      end
+    end
+    return pieces_there
   end
 
   def convert_alg_col_to_coord(alg_column)
