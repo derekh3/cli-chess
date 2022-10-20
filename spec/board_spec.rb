@@ -283,6 +283,36 @@ describe Board do
         expect(board4.board).to eq(expected_board)
       end
 
+      it "updates the board when black bishop moves to f5" do
+        expected_board = 
+        [['BR',nil,nil,'BQ','BK','BB','BN','BR'],
+        ['BP','BP','BP',nil,'BP','BP',nil,'BP'],
+        [nil, nil, 'BN', nil,nil,nil,nil,nil],
+        [nil, nil, nil, 'BP',nil,'BB','BP',nil],
+        [nil, nil, nil, 'WP',nil,nil,'WP',nil],
+        [nil, nil,'WN', nil, nil,nil,nil,nil],
+        ['WP','WP','WP',nil,'WP','WP',nil,'WP'],
+        ['WR', nil,'WB','WQ','WK','WB','WN','WR']]
+        player_input = 'Bcf5'
+        board4.make_move(2,player_input)
+        expect(board4.board).to eq(expected_board)
+      end
+
+      it "updates the board when black bishop moves to f5" do
+        expected_board = 
+        [['BR',nil,nil,'BQ','BK','BB','BN','BR'],
+        ['BP','BP','BP',nil,'BP','BP',nil,'BP'],
+        [nil, nil, 'BN', nil,nil,nil,nil,nil],
+        [nil, nil, nil, 'BP',nil,'BB','BP',nil],
+        [nil, nil, nil, 'WP',nil,nil,'WP',nil],
+        [nil, nil,'WN', nil, nil,nil,nil,nil],
+        ['WP','WP','WP',nil,'WP','WP',nil,'WP'],
+        ['WR', nil,'WB','WQ','WK','WB','WN','WR']]
+        player_input = 'B8f5'
+        board4.make_move(2,player_input)
+        expect(board4.board).to eq(expected_board)
+      end
+
       it "updates the board when black bishop captures g4" do
         expected_board = 
         [['BR',nil,nil,'BQ','BK','BB','BN','BR'],
@@ -320,6 +350,16 @@ describe Board do
 
       it "fails when a capture is attempted without using 'x' in the input" do
         player_input = 'Bg4'
+        expect(board4.make_move(2,player_input)).to eq(false)
+      end
+
+      it "fails when wrong row is given" do
+        player_input = 'B7f5'
+        expect(board4.make_move(2,player_input)).to eq(false)
+      end
+
+      it "fails when wrong column is given" do
+        player_input = 'Bgf5'
         expect(board4.make_move(2,player_input)).to eq(false)
       end
     end

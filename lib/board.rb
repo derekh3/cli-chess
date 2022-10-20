@@ -133,7 +133,9 @@ class Board
         origin_alg = player_input[0..-3]
         capture_mode = false
       end
-
+      if player_input[0] == "B"
+        # binding.pry
+      end
       if player_input[0] == "N" || player_input[0] == "B" || player_input[0] == "R" || player_input[0] == "Q" || player_input[0] == "K"
         origin_alg = origin_alg[1..-1]
         function_output = pieces_that_can_capture(player_input[0], whose_turn, origin_alg, destination_alg, @board, capture_mode)
@@ -468,8 +470,8 @@ class Board
       pieces_there = coord_list_of_piece(colored_piece, board)
     end
     if origin_alg.length == 1
-      column = convert_alg_col_to_coord(origin_alg)
-      return [[],[]] if column == nil
+      # column = convert_alg_col_to_coord(origin_alg)
+      # return [[],[]] if column == nil
       pieces_there = whose_turn == 1 ? pieces_in_that_row_or_column("W"+piece, origin_alg, board) :
                                       pieces_in_that_row_or_column("B"+piece, origin_alg, board)
     elsif origin_alg.length == 2
@@ -543,8 +545,8 @@ class Board
     if row_or_col == "1" || row_or_col == "2" || row_or_col == "3" || row_or_col == "4" || row_or_col == "5" || 
       row_or_col == "6" || row_or_col == "7" || row_or_col == "8"
       row = row_or_col.to_i
-      board[row].each_with_index do |square, col|
-        pieces_there << [row, col] if square == piece
+      board[convert_alg_row_to_coord(row)].each_with_index do |square, col|
+        pieces_there << [convert_alg_row_to_coord(row), col] if square == piece
       end
     elsif row_or_col == "a" || row_or_col == "b" || row_or_col == "c" || row_or_col == "d" || row_or_col == "e" || 
       row_or_col == "f" || row_or_col == "g" || row_or_col == "h"
@@ -561,6 +563,10 @@ class Board
   def convert_alg_col_to_coord(alg_column)
     hash = {"a" => 0, "b" => 1, "c" => 2, "d" => 3, "e" => 4, "f" => 5, "g" => 6, "h" => 7}
     return hash[alg_column.downcase]
+  end
+
+  def convert_alg_row_to_coord(alg_row)
+    return 8 - alg_row.to_i
   end
 
   def convert_coord_to_alg(coord)
